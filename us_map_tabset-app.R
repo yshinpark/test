@@ -11,13 +11,13 @@ library(sp)
 library(tmap)
 
 #read data
-test_shp<-st_read("C:/Users/rvp8/OneDrive - CDC/Data/output_data.shp")
-nis<-read.csv(file="C:/Users/rvp8/OneDrive - CDC/Data/nis.csv")
+test_shp<-st_read("C:/Users/pengo/Documents/GitHub/dashboard/test/output_data.shp")
+nis<-read.csv(file="C:/Users/pengo/Documents/GitHub/dashboard/test/nis.csv")
 merged_nis<-test_shp %>%
   left_join(., nis, by = c("NAME" = "State"))
 
 indicator<-unique(merged_nis$Indicator)
-year<-unique(merged_nis$Year)
+year<-sort(unique(merged_nis$Year))
 
 indicator1<-unique(merged_nis$Indicator)
 year1<-unique(merged_nis$Year)
@@ -53,8 +53,10 @@ ui <- fluidPage(
            
            
            mainPanel(
-             h3("This is a figure"),
-             plotOutput("state_map")
+             h3("This is a Choropleth map"),
+             plotOutput("state_map"),
+             h3("This is a bar chart"),
+             plotOutput("bar_chart")
            )
          )
 
@@ -83,8 +85,7 @@ ui <- fluidPage(
                  
                  
                  mainPanel(
-                   h3("This is a figure"),
-                   plotOutput("state_tmap")
+                   h3("This is a figure")
                  )
                )),
       tabPanel("Raw Data",h4("This is where you can show some data."),
@@ -104,14 +105,12 @@ server <- function(input, output, session) {
       labs(fill = "Percent")
   })
   
-  output$state_tmap<-renderPlot({tm_shape(subset(merged_nis, Indicator %in% input$indi1 & Year %in% input$yr1)) + 
-      tm_polygons("Percent", n=4, palette=Mypal) +
-      tm_text("State_Abbr", remove.overlap = TRUE )
-    tmap_mode("view")
-    tmap_last()}
+  output$bar_chart<-renderPlot({ggplot(subset(merged_nis, Indicator %in% input$indi & Year %in% input$yr),aes(x=reorder(NAME, Percent), y=Percent)) +
+      geom_bar(stat = "identity") +
+      coord_flip()
     
-  )
-  output$table1 <- renderTable({head(mtcars)})
+  })
+  output$table1 <- renderTable({head(subset(merged_nis, Indicator %in% input$indi & Year %in% input$yr))})
 }
 
 
